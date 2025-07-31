@@ -22,7 +22,7 @@ const updateUserStatus = async (req, res) => {
 // List all users (for admin panel)
 const listUsers = async (req, res) => {
   try {
-    const users = await User.find().select('-password');
+    const users = await User.find().select('-password').populate('groupId');
     res.json(users);
   } catch (err) {
     res.status(500).json({ error: err.message });

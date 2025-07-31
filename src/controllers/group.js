@@ -40,7 +40,21 @@ const GroupAdminAssign = async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 }
+const GroupList = async (req, res) => {
+  try {
+    const groups = await Group.find()
+      .populate('createdBy', 'name email role') // shows who created the group
+      .sort({ createdAt: -1 }); // latest first
+
+    res.status(200).json(groups);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+
 module.exports = {
   CreateGroup,
-  GroupAdminAssign
+  GroupAdminAssign,
+  GroupList
 };

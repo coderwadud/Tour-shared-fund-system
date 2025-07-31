@@ -17,6 +17,6 @@ app.use(cors());
 // Routes
 app.use("/api/auth", authRoutes);
 app.use('/api/users', user);
-app.use('/api/group/', group);
+app.use('/api/group', group);
 
 module.exports = app;
