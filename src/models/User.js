@@ -17,11 +17,12 @@ const userSchema = new mongoose.Schema({
     enum: ['pending', 'approved'],
     default: 'pending'
   },
-  groupId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Group',
-    default: null
-  }
+  groupId: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Group'
+    }
+  ]
 
 }, { timestamps: true });
 

@@ -2,8 +2,9 @@ const express = require("express");
 const cors = require("cors");
 const connectDB = require("./src/config/db");
 const authRoutes = require("./src/routes/authRoutes");
-const user = require("./src/routes/userRoutes");
-const group = require("./src/routes/group");
+const userRoutes = require("./src/routes/userRoutes");
+const groupRoutes = require("./src/routes/groupRoutes");
+const programRoutes = require("./src/routes/programRoutes");
 
 const app = express();
 
@@ -16,7 +17,8 @@ app.use(cors());
 
 // Routes
 app.use("/api/auth", authRoutes);
-app.use('/api/users', user);
-app.use('/api/group', group);
+app.use('/api/users', userRoutes);
+app.use('/api/group', groupRoutes);
+app.use('/api/program', programRoutes);
 
 module.exports = app;

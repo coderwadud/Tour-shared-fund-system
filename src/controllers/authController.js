@@ -4,7 +4,7 @@ const User = require('../models/User');
 
 const register = async (req, res) => {
   try {
-    const { name, email, password, role, phone, address, photo } = req.body;
+    const { name, email, password, role, phone, address, photo, groupId, status } = req.body;
 
     const userExists = await User.findOne({ email });
     if (userExists) return res.status(400).json({ message: 'User already exists' });
@@ -19,6 +19,8 @@ const register = async (req, res) => {
       phone,
       address,
       photo,
+      groupId,
+      status
     });
 
     res.status(201).json({ message: 'User registered. Waiting for approval.' });
