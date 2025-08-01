@@ -5,7 +5,8 @@ const {
   getAllPrograms,
   getProgramById,
   markGroupAttendance,
-  updateProgram
+  updateProgram,
+  deleteProgram
 } = require("../controllers/programController");
 const { checkRole, protect } = require("../middleware/authMiddleware");
 
@@ -19,6 +20,7 @@ router.get("/list", getAllPrograms);
 router.get("/:id", getProgramById);
 // program update
 router.put("/:id", updateProgram);
+router.delete("/:id", deleteProgram);
 
 // Mark attendance to a program
 router.post("/:id/attend", protect, checkRole(['admin', 'super-admin']), markGroupAttendance);

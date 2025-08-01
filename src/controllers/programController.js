@@ -115,6 +115,21 @@ const updateProgram = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+const deleteProgram = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const deletedProgram = await Program.findByIdAndDelete(id);
+
+    if (!deletedProgram) {
+      return res.status(404).json({ error: "Program not found" });
+    }
+
+    res.json({ message: "Program deleted successfully", program: deletedProgram });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
 
 
 
@@ -123,5 +138,6 @@ module.exports = {
   getAllPrograms,
   getProgramById,
   markGroupAttendance,
-  updateProgram
+  updateProgram,
+  deleteProgram
 };
