@@ -27,15 +27,32 @@ const getDashboardStats = async (req, res) => {
       totalEstimate += program.costIdea || 0;
       totalCost += program.fixedCost || 0;
 
-      if (program.fixedCost > 0) {
+      //   if (program.fixedCost > 0) {
+      //     completed++;
+      //   } else if (program.programDate > endOfToday) {
+      //     upcoming++;
+      //   } else if (
+      //     program.programDate >= startOfToday &&
+      //     program.programDate <= endOfToday
+      //   ) {
+      //     inProgress++;
+      //   }
+      if (program.fixedCost > 0 && program.programDate < startOfToday) {
         completed++;
-      } else if (program.programDate > endOfToday) {
-        upcoming++;
       } else if (
-        program.programDate >= startOfToday &&
-        program.programDate <= endOfToday
+        program.fixedCost === 0 &&
+        program.programDate <= endOfToday &&
+        program.programDate <= now
       ) {
         inProgress++;
+      } else if (
+        program.fixedCost > 0 &&
+        program.programDate >= startOfToday &&
+        program.programDate <= now
+      ) {
+        inProgress++;
+      } else if (program.programDate > endOfToday) {
+        upcoming++;
       }
     }
 
@@ -57,14 +74,13 @@ const getDashboardStats = async (req, res) => {
   }
 };
 
-
 // optional api
 const getDashboardStatsDetailed = async (req, res) => {
   try {
     const groups = await Group.find().lean();
-    const users = await User.find().select('-password').lean();
+    const users = await User.find().select("-password").lean();
     const programs = await Program.find()
-      .populate('attendees', 'name email role photo')
+      .populate("attendees", "name email role photo")
       .lean();
 
     const now = new Date();
@@ -75,7 +91,9 @@ const getDashboardStatsDetailed = async (req, res) => {
     let totalEstimate = 0;
     let totalCost = 0;
 
-    let upcoming = 0, inProgress = 0, completed = 0;
+    let upcoming = 0,
+      inProgress = 0,
+      completed = 0;
 
     // Build group-wise structure
     const groupMap = {};
@@ -85,14 +103,14 @@ const getDashboardStatsDetailed = async (req, res) => {
         name: group.name,
         location: group.location,
         users: [],
-        programs: []
+        programs: [],
       };
     }
 
     // Assign users to groups
     for (const user of users) {
       if (Array.isArray(user.groupId)) {
-        user.groupId.forEach(gid => {
+        user.groupId.forEach((gid) => {
           const gidStr = gid?.toString();
           if (groupMap[gidStr]) {
             groupMap[gidStr].users.push({
@@ -103,7 +121,7 @@ const getDashboardStatsDetailed = async (req, res) => {
               address: user.address,
               photo: user.photo,
               role: user.role,
-              status: user.status
+              status: user.status,
             });
           }
         });
@@ -118,19 +136,19 @@ const getDashboardStatsDetailed = async (req, res) => {
       totalEstimate += program.costIdea || 0;
       totalCost += program.fixedCost || 0;
 
-      let status = '';
+      let status = "";
       if (program.fixedCost > 0) {
         completed++;
-        status = 'completed';
+        status = "completed";
       } else if (program.programDate > endOfToday) {
         upcoming++;
-        status = 'upcoming';
+        status = "upcoming";
       } else if (
         program.programDate >= startOfToday &&
         program.programDate <= endOfToday
       ) {
         inProgress++;
-        status = 'in-progress';
+        status = "in-progress";
       }
 
       groupMap[groupId].programs.push({
@@ -140,7 +158,7 @@ const getDashboardStatsDetailed = async (req, res) => {
         costIdea: program.costIdea,
         fixedCost: program.fixedCost,
         status,
-        attendees: program.attendees
+        attendees: program.attendees,
       });
     }
 
@@ -158,9 +176,8 @@ const getDashboardStatsDetailed = async (req, res) => {
       totalEstimatedCost: totalEstimate,
       totalActualCost: totalCost,
       costDistance: totalEstimate - totalCost,
-      groups: groupList
+      groups: groupList,
     });
-
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message });
@@ -170,9 +187,9 @@ const getDashboardStatsDetailed = async (req, res) => {
 const getDashboardHighlights = async (req, res) => {
   try {
     const groups = await Group.find().sort({ createdAt: -1 }).lean();
-    const users = await User.find().select('-password').lean();
+    const users = await User.find().select("-password").lean();
     const programs = await Program.find()
-      .populate('attendees', 'name email role')
+      .populate("attendees", "name email role")
       .sort({ programDate: -1 })
       .lean();
 
@@ -195,32 +212,36 @@ const getDashboardHighlights = async (req, res) => {
       .sort((a, b) => b[1] - a[1])
       .slice(0, 5)
       .map(([groupId, count]) => {
-        const group = groups.find(g => g._id.toString() === groupId);
+        const group = groups.find((g) => g._id.toString() === groupId);
         return group ? { ...group, totalPrograms: count } : null;
-      }).filter(Boolean);
+      })
+      .filter(Boolean);
 
     // Top programs by number of attendees
     const topPrograms = [...programs]
       .sort((a, b) => (b.attendees?.length || 0) - (a.attendees?.length || 0))
       .slice(0, 5)
-      .map(p => ({
+      .map((p) => ({
         _id: p._id,
         name: p.name,
         programDate: p.programDate,
         attendeeCount: p.attendees?.length || 0,
-        groupId: p.groupId
+        groupId: p.groupId,
       }));
 
     // Filter by status
-    const inProgressPrograms = programs.filter(p =>
-      p.programDate >= startOfToday && p.programDate <= endOfToday && !p.fixedCost
+    const inProgressPrograms = programs.filter(
+      (p) =>
+        p.programDate >= startOfToday &&
+        p.programDate <= endOfToday &&
+        !p.fixedCost
     );
 
-    const completedPrograms = programs.filter(p => p.fixedCost > 0);
-    const upcomingPrograms = programs.filter(p => p.programDate > endOfToday);
+    const completedPrograms = programs.filter((p) => p.fixedCost > 0);
+    const upcomingPrograms = programs.filter((p) => p.programDate > endOfToday);
 
-    const pendingUsers = users.filter(u => u.status === 'pending');
-    const activeUsers = users.filter(u => u.status === 'active');
+    const pendingUsers = users.filter((u) => u.status === "pending");
+    const activeUsers = users.filter((u) => u.status === "active");
 
     res.status(200).json({
       recentGroups,
@@ -231,15 +252,16 @@ const getDashboardHighlights = async (req, res) => {
       completedPrograms,
       upcomingPrograms,
       pendingUsers,
-      activeUsers
+      activeUsers,
     });
-
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: error.message });
   }
 };
 
-
-
-module.exports = { getDashboardStats, getDashboardStatsDetailed, getDashboardHighlights };
+module.exports = {
+  getDashboardStats,
+  getDashboardStatsDetailed,
+  getDashboardHighlights,
+};
