@@ -186,11 +186,12 @@ const getDashboardStatsDetailed = async (req, res) => {
 
 const getDashboardHighlights = async (req, res) => {
   try {
-    const groups = await Group.find().sort({ createdAt: -1 }).lean();
+    const groups = await Group.find().sort({ createdAt: -1 }).lean().populate('createdBy');
     const users = await User.find().select("-password").lean();
     const programs = await Program.find()
       .populate("attendees", "name email role")
       .sort({ programDate: -1 })
+      .populate('groupId')
       .lean();
 
     const now = new Date();
@@ -222,13 +223,10 @@ const getDashboardHighlights = async (req, res) => {
       .sort((a, b) => (b.attendees?.length || 0) - (a.attendees?.length || 0))
       .slice(0, 5)
       .map((p) => ({
-        _id: p._id,
-        name: p.name,
-        programDate: p.programDate,
+        ...p,
         attendeeCount: p.attendees?.length || 0,
         groupId: p.groupId,
       }));
-
     // Filter by status
     const inProgressPrograms = programs.filter(
       (p) =>
@@ -241,7 +239,7 @@ const getDashboardHighlights = async (req, res) => {
     const upcomingPrograms = programs.filter((p) => p.programDate > endOfToday);
 
     const pendingUsers = users.filter((u) => u.status === "pending");
-    const activeUsers = users.filter((u) => u.status === "active");
+    const activeUsers = users.filter((u) => u.status === "approved");
 
     res.status(200).json({
       recentGroups,
